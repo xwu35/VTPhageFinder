@@ -26,7 +26,7 @@ conda env create -n snakemake -f snakemake_env.yml
 mamba env create -n snakemake -f snakemake_env.yml
 ```
 
-### Move Slurm profile
+### Move snakemake profile
 
 The profile is required to run the workflow on HPC.
 
@@ -57,15 +57,15 @@ A dry-run can be performed to check which rules will be executed and which files
 conda activate snakemake
 
 python VTPhageFinder.py \
---reads_dir test_data/sequences \
---sample_info test_data/sample_info.txt \
---output_dir FpVT_output \
---reference_genome resources/Fp22_genome/fp22_assembly.fasta \
---prophage_region resources/Fp22_genome/fp22_prophage_region.bed \
---dryrun
+    --reads_dir test_data/sequences \
+    --sample_info test_data/sample_info.txt \
+    --output_dir FpVT_output \
+    --reference_genome resources/Fp22_genome/fp22_assembly.fasta \
+    --prophage_region resources/Fp22_genome/fp22_prophage_region.bed \
+    --dryrun
 ```
 
-### test data
+### Run test data
 
 Do not run this on the login node. Submit it as an sbatch job on the HPC using `sbatch run_vtphagefinder.sh`. Make sure to update the --mail-user field before submitting the job.
 
@@ -73,9 +73,19 @@ Do not run this on the login node. Submit it as an sbatch job on the HPC using `
 conda activate snakemake
 
 python VTPhageFinder.py \
---reads_dir test_data/sequences \
---sample_info test_data/sample_info.txt \
---output_dir FpVT_output \
---reference_genome resources/Fp22_genome/fp22_assembly.fasta \
---prophage_region resources/Fp22_genome/fp22_prophage_region.bed 
+    --reads_dir test_data/sequences \
+    --sample_info test_data/sample_info.txt \
+    --output_dir FpVT_output \
+    --reference_genome resources/Fp22_genome/fp22_assembly.fasta \
+    --prophage_region resources/Fp22_genome/fp22_prophage_region.bed 
 ```
+
+### Specific steps
+
+Specific steps can be run using the `--step` flag. 
+
+- fastqc: QC on raw reads
+- preprocess: run fastqc and trim the reads
+- assemble: all steps (fastqc, preprocess, assemble trimmed reads into contigs and remove contigs aligned to the host genome with >= 95% ANI over 85% AF)
+
+VTPhageFinder runs all steps by default.
