@@ -1,0 +1,9 @@
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+
+dependencies:
+  - pip=23.1.2
+  - pip:
+    - quast==5.2.0

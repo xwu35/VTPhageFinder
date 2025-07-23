@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - r-base=4.4.3
+  - r-tidyverse=2.0.0
+  - r-svglite=2.1.3

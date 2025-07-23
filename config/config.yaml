@@ -1,0 +1,47 @@
+# resources: cpu and memory
+resources:
+    huge_mem: 256000 # Memory in megabytes (e.g 256GB = 256000)
+
+    big_mem: 128000      
+    big_cpu: 16         
+
+    med_mem: 64000      
+    med_cpu: 8         
+
+    small_mem: 16000      
+    small_cpu: 4  
+
+trimmomatic:
+  # sequence type, paired end (PE) or single (SE)
+  seqType: "PE"
+  # phred type
+  phred: "-phred33"
+  # adapter type to trim from paired end libraries with trimmomatic
+  # ["NexteraPE-PE", "TruSeq2-PE", "TruSeq3-PE", "TruSeq3-PE-2"]
+  adapter: "resources/adapters.fna"
+  # parameters for trimming adapters on paired-end samples
+  adapter_params: "2:30:10:2:True"
+  # parameters for trimming prior to adapter removal on paired-end samples
+  pre_adapter_params: ""
+  # parameters for trimming after adapter removal on paired-end samples
+  post_adapter_params: "SLIDINGWINDOW:4:20 MINLEN:36"
+
+bowtie2:
+  extra_settings: "--very-sensitive"
+
+minimap2:
+  settings: "sr"
+
+spades:
+  setting: "--sc"
+  
+quast:
+  # contig length
+  length: 1000
+  
+blastn:
+  dbtype: nucl
+  outfmt: "'6 std qlen slen'"
+  max_target_seqs: 10000
+  evalue: 1e-3
+
