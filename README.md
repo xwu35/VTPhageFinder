@@ -89,3 +89,12 @@ Specific steps can be run using the `--step` flag.
 - assemble: all steps (fastqc, preprocess, assemble trimmed reads into contigs and remove contigs aligned to the host genome with >= 95% ANI over 85% AF)
 
 VTPhageFinder runs all steps by default.
+
+## Output description
+
+- Quality control results: output_dir/reads_processing/fastqc
+- Trimmed reads used for assembly: output_dir/reads_processing/filtered_reads
+- Read counts: output_dir/reads_processing/reads_statistics/{number_of_reads_removed_at_each_step.txt,reads_composition_barplot.svg}
+- Retained contig sequences: output_dir/check_contig_contamination/no_host_contig_sequences
+
+
