@@ -35,9 +35,6 @@ The profile is required to run the workflow on HPC.
 ```bash
 # move the profile to the right directory
 mv slurm ~/.config/snakemake
-
-# add execute permissions to the scripts
-chmod +x ~/.config/snakemake/slurm/slurm-*
 ```
 
 ## Sample information table
