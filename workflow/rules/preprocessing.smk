@@ -37,6 +37,8 @@ rule fastqc_raw_reads:
         dir=lambda w, output: os.path.dirname(output.R1_zip)
     threads:
         config["resources"]["small_cpu"]
+    resources:
+        mem_mb=config["resources"]["small_mem"]
     conda:
         os.path.join(dir["env"], "qc.yml")
     shell:
@@ -127,6 +129,8 @@ rule fastqc_trimmed_reads:
         dir=lambda w, output: os.path.dirname(output.R1_zip)
     threads:
         config["resources"]["small_cpu"]
+    resources:
+        mem_mb=config["resources"]["small_mem"]
     conda:
         os.path.join(dir["env"], "qc.yml")
     shell:
