@@ -34,7 +34,10 @@ The profile is required to run the workflow on HPC.
 
 ```bash
 # move the profile to the right directory
-mv slurm ~/.config/snakemake
+mv slurm ~/.config/snakemake 
+
+# if the slurm directory was already moved to ~/.config/snakemake from a previous download, delete it from the repository directory to avoid potential errors
+rm -r slurm
 ```
 
 ## Sample information table
@@ -50,7 +53,7 @@ The sample information table should look like this:
 
 ## Usage
 
-VTPhageFinder supports two mapping software options (bowtie2 and minimap2), with minimap2 used by default. Detailed usage information can be viewed using the -h or --help flags `python VTPhageFinder.py -h`.
+VTPhageFinder supports two mapping software options (bowtie2 and minimap2) and two assembler options (megahit and spades), with minimap2 and spades used by default. Detailed usage information can be viewed using the -h or --help flags `python VTPhageFinder.py -h`.
 
 ### dry run 
 
