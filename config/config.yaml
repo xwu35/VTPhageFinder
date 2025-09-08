@@ -32,6 +32,10 @@ bowtie2:
 minimap2:
   settings: "sr"
 
+megahit:
+  # use default kmer list
+  setting: ""
+  
 spades:
   setting: "--sc"
   

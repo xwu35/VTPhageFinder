@@ -68,6 +68,13 @@ version = "1.0.0"
     help=('Mapping software; available options are: minimap2, bowtie2')
 )
 @click.option(
+    '--assembler',
+    default='spades',
+    type=str,
+    show_default=True,
+    help=('Assembly software; available options are: megahit, spades')
+)
+@click.option(
     '--step',
     default='assemble',
     type=str,
@@ -97,7 +104,7 @@ version = "1.0.0"
 
 def run_vtphagefinder(reads_dir, sample_info, output_dir, reference_genome, 
           prophage_region, prophage_identity, nonprophage_identity,
-          mapper, step, dryrun, conda_envs, profile):
+          mapper, assembler, step, dryrun, conda_envs, profile):
 
           # write run log if it is not a dry run
           if not dryrun:
@@ -114,7 +121,8 @@ def run_vtphagefinder(reads_dir, sample_info, output_dir, reference_genome,
                 log.write(f"Host prophage coordinates: {prophage_region}\n")
                 log.write(f"Host prophage region identity cutoff: {prophage_identity}\n")
                 log.write(f"Host non-prophage region identity cutoff: {nonprophage_identity}\n")
-                log.write(f"Mappine software: {mapper}")
+                log.write(f"Mappine software: {mapper}\n")
+                log.write(f"Assembly software: {assembler}")
           
           cmd = (
             'snakemake --snakefile workflow/Snakefile '
@@ -127,7 +135,7 @@ def run_vtphagefinder(reads_dir, sample_info, output_dir, reference_genome,
                     'results_dir={results} host_genome={host} '
                     'host_prophage_region={region} prophage_identity={propid} '
                     'nonprophage_identity={nonpropid} '
-                    'mapper={mapper} step={step}'
+                    'mapper={mapper} assembler={assembler} step={step}'
           ).format(
             conda_envs='' if conda_envs=='' else '--conda-prefix {}'.format(conda_envs),
             profile=profile,
@@ -140,6 +148,7 @@ def run_vtphagefinder(reads_dir, sample_info, output_dir, reference_genome,
             propid=prophage_identity,
             nonpropid=nonprophage_identity,
             mapper=mapper,
+            assembler=assembler,
             step=step
           )
 
