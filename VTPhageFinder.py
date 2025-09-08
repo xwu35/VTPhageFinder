@@ -121,7 +121,7 @@ def run_vtphagefinder(reads_dir, sample_info, output_dir, reference_genome,
                 log.write(f"Host prophage coordinates: {prophage_region}\n")
                 log.write(f"Host prophage region identity cutoff: {prophage_identity}\n")
                 log.write(f"Host non-prophage region identity cutoff: {nonprophage_identity}\n")
-                log.write(f"Mappine software: {mapper}\n")
+                log.write(f"Mapping software: {mapper}\n")
                 log.write(f"Assembly software: {assembler}")
           
           cmd = (
