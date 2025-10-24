@@ -17,7 +17,6 @@ trimmomatic:
   # phred type
   phred: "-phred33"
   # adapter type to trim from paired end libraries with trimmomatic
-  # ["NexteraPE-PE", "TruSeq2-PE", "TruSeq3-PE", "TruSeq3-PE-2"]
   adapter: "resources/adapters.fna"
   # parameters for trimming adapters on paired-end samples
   adapter_params: "2:30:10:2:True"
@@ -33,10 +32,14 @@ minimap2:
   settings: "sr"
 
 megahit:
-  # use default kmer list
+  # "" means use default kmer list
   setting: ""
-  
-spades:
+
+metaspades:
+  # "" means use default kmer list
+  setting: ""
+
+spades_sc:
   setting: "--sc"
   
 quast:

@@ -53,7 +53,7 @@ The sample information table should look like this:
 
 ## Usage
 
-VTPhageFinder supports two mapping software options (bowtie2 and minimap2) and two assembler options (megahit and spades), with minimap2 and spades used by default. Detailed usage information can be viewed using the -h or --help flags `python VTPhageFinder.py -h`.
+VTPhageFinder supports two mapping software options (bowtie2 and minimap2) and three assembler options (megahit, metaspades and spades_sc), with minimap2 and spades_sc (single cell mode) used by default. Detailed usage information can be viewed using the -h or --help flags `python VTPhageFinder.py -h`.
 
 ### dry run 
 

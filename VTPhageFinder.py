@@ -69,10 +69,10 @@ version = "1.0.0"
 )
 @click.option(
     '--assembler',
-    default='spades',
+    default='spades_sc',
     type=str,
     show_default=True,
-    help=('Assembly software; available options are: megahit, spades')
+    help=('Assembly software; available options are: megahit, metaspades, spades_sc')
 )
 @click.option(
     '--step',
