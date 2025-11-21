@@ -57,6 +57,8 @@ rule multiqc_raw_reads:
     params:
         in_dir=directory(os.path.join(dir["output"]["reads_processing"], "fastqc", "raw_reads")),
         out_dir=lambda w, output: os.path.dirname(output.html)
+    resources:
+        mem_mb=config["resources"]["small_mem"]
     conda:
         os.path.join(dir["env"], "qc.yml")
     shell:
@@ -106,6 +108,8 @@ rule trimmomatic:
         os.path.join(dir["output"]["intermediate"], "trimmomatic", "{sample}.trimmomatic.log"),
     threads:
         config["resources"]["med_cpu"]
+    resources:
+        mem_mb=config["resources"]["med_mem"]
     conda:
         os.path.join(dir["env"], "trimmomatic.yml")
     shell:
@@ -149,6 +153,8 @@ rule multiqc_trimmed_reads:
     params:
         in_dir=directory(os.path.join(dir["output"]["reads_processing"], "fastqc", "after_trimmomatic")),
         out_dir=lambda w, output: os.path.dirname(output.html)
+    resources:
+        mem_mb=config["resources"]["small_mem"]
     conda:
         os.path.join(dir["env"], "qc.yml")
     shell:
@@ -657,10 +663,14 @@ rule host_sort_merged_bam:
         keptSorted=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_kept_sorted.bam")
     conda:
         os.path.join(dir["env"], "coverm.yml")
+    threads:
+        config["resources"]["small_cpu"]
+    resources:
+        mem_mb=config["resources"]["small_mem"]
     shell:
         """
         # sort by name 
-        samtools sort -n {input.kept} -o {output.keptSorted}
+        samtools sort -n {input.kept} -o {output.keptSorted} -@ {threads}
         """
 
 rule host_extract_kept_reads:
