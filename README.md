@@ -28,16 +28,16 @@ conda env create -n snakemake -f snakemake_env.yml
 mamba env create -n snakemake -f snakemake_env.yml
 ```
 
-### Move snakemake profile
+### Download snakemake profile
 
-The profile is required to run the workflow on HPC.
+The profile is required to run the workflow on HPC. Skip this step if you already have a SLURM profile in `~/.config/snakemake`.
 
 ```bash
+# download the profile
+git clone https://github.com/xwu35/slurm
+
 # move the profile to the right directory
 mv slurm ~/.config/snakemake 
-
-# if the slurm directory was already moved to ~/.config/snakemake from a previous download, delete it from the repository directory to avoid potential errors
-rm -r slurm
 ```
 
 ## Sample information table
