@@ -392,13 +392,13 @@ elif config["mapper"]=="minimap2":
     rule human_genome_mapping_minimap2:
         """map reads back to human genome using minimap2"""
         input:
+            human_fasta=os.path.join("resources", "human_genome", "GRCh38.fasta"),
             R1=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R1.phixfilt.fastq.gz"),
             R2=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R2.phixfilt.fastq.gz")
         output:
             sam=temp(os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}.sam"))
         params:
-            setting=config["minimap2"]["settings"],
-            human_fasta=os.path.join("resources", "human_genome", "GRCh38.fasta")
+            setting=config["minimap2"]["settings"]
         log:
             os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}.minimap2.log")
         threads:
@@ -412,7 +412,7 @@ elif config["mapper"]=="minimap2":
             minimap2 -ax {params.setting} \
                 -t {threads} \
                 --secondary=no \
-                {params.human_fasta} \
+                {input.human_fasta} \
                 {input.R1} \
                 {input.R2} > {output.sam} 2>{log}
             """
