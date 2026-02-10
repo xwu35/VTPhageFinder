@@ -17,8 +17,8 @@ rule rename_raw_reads:
         R2=os.path.join(dir["output"]["reads_processing"], "renamed_raw_reads", "{sample}_R2.fastq.gz")
     shell:
         """
-        cp {input.R1} {output.R1} 
-        cp {input.R2} {output.R2} 
+        ln -s {input.R1} {output.R1} 
+        ln -s {input.R2} {output.R2} 
         """
 
 ###################
