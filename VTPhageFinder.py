@@ -11,7 +11,7 @@ version = "1.0.0"
 
 @click.command(
     context_settings=dict(help_option_names=['-h', '--help'], max_content_width=150),
-    help='Usage:\n python VTPhageFinder --reads_dir <reads directory> --sample_info <sample information table> --output_dir <output directory> '
+    help='Usage:\n python VTPhageFinder.py --reads_dir <reads directory> --sample_info <sample information table> --output_dir <output directory> '
     '--reference_genome <reference genome sequences> --prophage_region <Prophage coordinates>'
 )
 @click.option(
