@@ -16,14 +16,12 @@ trimmomatic:
   seqType: "PE"
   # phred type
   phred: "-phred33"
-  # adapter type to trim from paired end libraries with trimmomatic
-  adapter: "resources/adapters.fna"
   # parameters for trimming adapters on paired-end samples
   adapter_params: "2:30:10:2:True"
   # parameters for trimming prior to adapter removal on paired-end samples
   pre_adapter_params: ""
   # parameters for trimming after adapter removal on paired-end samples
-  post_adapter_params: "SLIDINGWINDOW:4:20 MINLEN:36"
+  post_adapter_params: "SLIDINGWINDOW:4:20 MINLEN:50"
 
 bowtie2:
   extra_settings: "--very-sensitive"

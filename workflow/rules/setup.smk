@@ -5,6 +5,7 @@ dir["output"] = dict()
 # WORKFLOW DIRs
 dir["env"]     = os.path.join(workflow.basedir, "envs")
 dir["scripts"] = os.path.join(workflow.basedir, "scripts")
+dir["db"] = os.path.join(workflow.basedir, "..", "db")
 
 # OUTPUT DIRs
 dir["output"]["base"] = RESULTS_DIR
@@ -12,38 +13,42 @@ dir["output"]["reads_processing"] = os.path.join(dir["output"]["base"], "reads_p
 dir["output"]["assembly"] = os.path.join(dir["output"]["base"], "assembly")
 dir["output"]["check_contig_contamination"] = os.path.join(dir["output"]["base"], "check_contig_contamination")
 dir["output"]["intermediate"] = os.path.join(dir["output"]["reads_processing"], "intermediate")
-dir["output"]["viral_identification"] = os.path.join(dir["output"]["base"], "viral_identification")
 
 #------------ SET UP THE OUTPUT
 host_removed_reads=[]
-contig_status=[]
 no_host_contig=[]
 for sample in SAMPLE:
     host_removed_reads.append(os.path.join(dir["output"]["reads_processing"], "filtered_reads", sample + "_R1.unmapped.fastq.gz"))
     host_removed_reads.append(os.path.join(dir["output"]["reads_processing"], "filtered_reads", sample + "_R2.unmapped.fastq.gz"))
     host_removed_reads.append(os.path.join(dir["output"]["reads_processing"], "filtered_reads", sample + ".unmapped.singletons.fastq.gz"))
-    contig_status.append(os.path.join(dir["output"]["assembly"], "contig_evaluation", sample, "report.txt"))
     no_host_contig.append(os.path.join(dir["output"]["check_contig_contamination"], "blastn_phix", sample + "_blastn_phix.out"))
     no_host_contig.append(os.path.join(dir["output"]["check_contig_contamination"], "blastn_human", sample + "_blastn_human_ANI95_AF50.out"))
     no_host_contig.append(os.path.join(dir["output"]["check_contig_contamination"], "no_host_contig_sequences", sample + "_contigs_1kb_no-host.fasta"))
 
+# checkv scripts
+scripts_input = [
+    os.path.join(dir["scripts"], "anicalc.py"),
+    os.path.join(dir["scripts"], "aniclust.py")
+]
+
 # raw reads: read counts and fastqc
 fastqc_input = [
-    os.path.join(dir["scripts"], "anicalc.py"),
-    os.path.join(dir["scripts"], "aniclust.py"),
     os.path.join(dir["output"]["reads_processing"], "reads_statistics", "raw_reads", "R1_stats.tsv"),
     os.path.join(dir["output"]["reads_processing"], "reads_statistics", "raw_reads", "R2_stats.tsv"),
     os.path.join(dir["output"]["reads_processing"], "fastqc", "multiqc_raw_reads", "multiqc_report.html")
 ]
 
-# clean reads: removed adaptors, phix, human and host contmaination
-clean_reads_input = [os.path.join(dir["output"]["reads_processing"], "fastqc", "multiqc_after_trimmomatic", "multiqc_report.html")] + host_removed_reads + [
+# preprocess: removed adaptoers, phix, human and host contmaination
+preprocess_input = scripts_input + [os.path.join(dir["output"]["reads_processing"], "fastqc", "multiqc_after_trimmomatic", "multiqc_report.html")] + host_removed_reads + [
     os.path.join(dir["output"]["reads_processing"], "reads_statistics", "number_of_reads_removed_at_each_step.txt"),
     os.path.join(dir["output"]["reads_processing"], "reads_statistics", "reads_composition_barplot.svg")
 ]
 
 # assembly and removed host contigs
-assembly_input = contig_status + [os.path.join(dir["output"]["assembly"], "all_contigs_1kb.fasta")] + no_host_contig
+assembly_input = [
+    os.path.join(dir["output"]["assembly"], "contig_evaluation", "combined_assembly_stats.txt"),
+    os.path.join(dir["output"]["assembly"], "all_contigs_1kb.fasta")
+    ] + no_host_contig
 
 #---------- DOWNLOAD SCRIPTS
 localrules:

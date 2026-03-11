@@ -28,16 +28,11 @@ def get_all_input(wildcards):
         wanted_input = fastqc_input
 
     if config["step"] == "preprocess":
-        # get raw reads fastqc input
-        wanted_input += fastqc_input
-        # get clean reads input
-        wanted_input += clean_reads_input
+        wanted_input = preprocess_input
       
     if config["step"] == "assemble":
-        # get raw reads fastqc input
-        wanted_input += fastqc_input
-        # get clean reads input
-        wanted_input += clean_reads_input
+        # get preprocess input
+        wanted_input += preprocess_input
         # get assembly input
         wanted_input += assembly_input
 

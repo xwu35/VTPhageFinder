@@ -24,10 +24,10 @@ VTPhageFinder is built for Snakemake version 7. Version 8 and above introduce br
 cd VTPhageFinder
 
 # option 1 using conda
-conda env create -n snakemake -f snakemake_env.yml
+conda env create -n snakemake -f VTPhageFinder/snakemake_env.yml
 
 # option 2 using mamba if it's installed
-mamba env create -n snakemake -f snakemake_env.yml
+mamba env create -n snakemake -f VTPhageFinder/snakemake_env.yml
 ```
 
 ### Download snakemake profile
@@ -40,6 +40,20 @@ git clone https://github.com/xwu35/slurm
 
 # move the profile to the right directory
 mv slurm ~/.config/snakemake 
+```
+
+### Export PATH
+
+Add the VTPhageFinder path to your environment variable so you can run `VTPhageFinder.py` without the full path.
+
+```bash
+echo 'export PATH="/your/path/to/VTPhageFinder:$PATH"' >> ~/.bashrc
+```
+
+To make the changes take effect, you can either log out and log back in, or you can source the `.bashrc` file using the following command:
+
+```bash
+source ~/.bashrc
 ```
 
 ## Sample information table
@@ -55,46 +69,40 @@ The sample information table should look like this:
 
 ## Usage
 
-VTPhageFinder supports two mapping software options (bowtie2 and minimap2) and three assembler options (megahit, metaspades and spades_sc), with minimap2 and spades_sc (single cell mode) used by default. Detailed usage information can be viewed using the -h or --help flags `python VTPhageFinder.py -h`.
+VTPhageFinder supports two mapping software options (bowtie2 and minimap2) and three assembler options (megahit, metaspades and spades_sc), with minimap2 and spades_sc (single cell mode) used by default. Detailed usage information can be viewed using the -h or --help flags `VTPhageFinder.py -h`.
 
-### dry run 
+### Test run
 
-A dry-run can be performed to check which rules will be executed and which files will be produced. 
+Do not run this on the login node. Submit it as an sbatch job. See `run_vtphagefinder.sh` for an example, or check the HTCF usage guide here (https://github.com/xwu35/baldridge_lab/blob/main/HTCF.md). A dry-run can be performed to check which rules will be executed and which files will be produced by specifing the `--dryrun` flag.  
 
 ```bash
 conda activate snakemake
 
-python VTPhageFinder.py \
-    --reads_dir test_data/sequences \
-    --sample_info test_data/sample_info.txt \
-    --output_dir FpVT_output \
-    --reference_genome resources/Fp22_genome/fp22_assembly.fasta \
-    --prophage_region resources/Fp22_genome/fp22_prophage_region.bed \
-    --dryrun
+VTPhageFinder.py --test # An output directory named "test_output" will appear
 ```
 
-### Run test data
+### Example run
 
-Do not run this on the login node. Submit it as an sbatch job on the HPC using `sbatch run_vtphagefinder.sh`. Make sure to update the --mail-user field before submitting the job.
+A dry-run can be performed by specifing the `--dryrun` flag.
 
 ```bash
 conda activate snakemake
 
 python VTPhageFinder.py \
-    --reads_dir test_data/sequences \
-    --sample_info test_data/sample_info.txt \
-    --output_dir FpVT_output \
-    --reference_genome resources/Fp22_genome/fp22_assembly.fasta \
-    --prophage_region resources/Fp22_genome/fp22_prophage_region.bed 
+    --reads_dir /path/to/your/sequences \
+    --sample_info /path/to/your/sample_info.txt \
+    --output_dir /name/your/output/dir \
+    --reference_genome /path/to/your/genome/fasta \
+    --prophage_region /path/to/your/prophage/region 
 ```
 
 ### Specific steps
 
 Specific steps can be run using the `--step` flag. 
 
-- **fastqc**: QC on raw reads
-- **preprocess**: run fastqc and trim the reads
-- **assemble**: all steps (fastqc, preprocess, assemble trimmed reads into contigs and remove contigs aligned to the host genome with >= 95% ANI over 85% AF)
+- **fastqc**: QC on raw reads. It is no longer included in preprocess and assemble.
+- **preprocess**: trim the reads, QC after removing adapters and low quality reads, remove phiX, human and host reads contamination
+- **assemble**: all steps except fastqc (preprocess and assemble trimmed reads into contigs and remove contigs aligned to the host genome with >= 95% ANI over 85% AF)
 
 VTPhageFinder runs all steps by default.
 

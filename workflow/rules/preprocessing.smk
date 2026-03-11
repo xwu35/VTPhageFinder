@@ -3,10 +3,6 @@ localrules:
     download_phix_genome,
     download_human_genome
 
-#######################
-### rename raw reads ##
-#######################
-
 rule rename_raw_reads:
     """rename raw reads to make sure the extension works for fastqc"""
     input:
@@ -20,10 +16,6 @@ rule rename_raw_reads:
         ln -s {input.R1} {output.R1} 
         ln -s {input.R2} {output.R2} 
         """
-
-###################
-### QC raw reads ##
-###################
 
 rule fastqc_raw_reads:
     """run fastqc on raw reads"""
@@ -84,10 +76,6 @@ rule get_raw_reads_status:
         seqkit stats -j {threads} -To {output.R2_stats} {input.R2}
         """
 
-##########################
-### reads preprocessing ##
-##########################
-
 rule trimmomatic:
     """remove adapters and low quality reads"""
     input:
@@ -101,7 +89,7 @@ rule trimmomatic:
     params:
         seqType = config["trimmomatic"]["seqType"],
         phred = config["trimmomatic"]["phred"],
-        adapter = config["trimmomatic"]["adapter"],
+        adapter = config["adapter"],
         adapter_params = config["trimmomatic"]["adapter_params"],
         post_adapter_params = config["trimmomatic"]["post_adapter_params"],
     log:
@@ -115,10 +103,10 @@ rule trimmomatic:
     shell:
         """
         trimmomatic {params.seqType} {params.phred} -threads {threads} \
-        {input.R1} {input.R2} \
-        {output.R1P} {output.R1U} {output.R2P} {output.R2U} \
-        ILLUMINACLIP:{params.adapter}:{params.adapter_params} \
-        {params.post_adapter_params} 2>{log} # –baseout
+            {input.R1} {input.R2} \
+            {output.R1P} {output.R1U} {output.R2P} {output.R2U} \
+            ILLUMINACLIP:{params.adapter}:{params.adapter_params} \
+            {params.post_adapter_params} 2>{log} # –baseout
         """
 
 rule fastqc_trimmed_reads:
@@ -181,11 +169,11 @@ rule get_reads_status_after_trimmomatic:
         """
 
 rule download_phix_genome:
-    """download the phix genome (GCF_000819615.1_ViralProj14015 is the same as NC_001422.1, the one used in FpVT paper). Check the sequence header"""
+    """download the phix genome"""
     output:
-        os.path.join("resources", "phix_genome", "phix.fasta")
+        os.path.join(dir["db"], "phix_genome", "phix.fasta")
     log:
-        os.path.join("resources", "phix_genome", "phix.log")
+        os.path.join(dir["db"], "phix_genome", "phix.log")
     params:
         url="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/819/615/GCF_000819615.1_ViralProj14015/GCF_000819615.1_ViralProj14015_genomic.fna.gz"
     shell:
@@ -201,9 +189,9 @@ if config["mapper"]=="bowtie2":
     rule bowtie2_build_phix_genome:
         """build bowtie2 index for phiX genome"""
         input:
-            phix_fasta=os.path.join("resources", "phix_genome", "phix.fasta")
+            phix_fasta=os.path.join(dir["db"], "phix_genome", "phix.fasta")
         output:
-            multiext(os.path.join("resources", "phix_genome", "phix"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2")
+            multiext(os.path.join(dir["db"], "phix_genome", "phix"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2")
         params: 
             prefix=lambda w, input: os.path.splitext(input.phix_fasta)[0]
         threads: 
@@ -221,14 +209,14 @@ if config["mapper"]=="bowtie2":
     rule phix_genome_mapping_bowtie2:
         """map reads back to phiX genome using bowtie2"""
         input:
-            bt_index=multiext(os.path.join("resources", "phix_genome", "phix"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"),
+            bt_index=multiext(os.path.join(dir["db"], "phix_genome", "phix"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"),
             R1P=os.path.join(dir["output"]["intermediate"], "trimmomatic", "{sample}_R1.trimmomatic.fastq.gz"),
             R2P=os.path.join(dir["output"]["intermediate"], "trimmomatic", "{sample}_R2.trimmomatic.fastq.gz")
         output:
             sam=temp(os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}.sam"))
         params:
             setting=config["bowtie2"]["extra_settings"],
-            prefix=os.path.join("resources", "phix_genome", "phix")
+            prefix=os.path.join(dir["db"], "phix_genome", "phix")
         log:
             os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}.bowtie2.log")
         threads:
@@ -238,15 +226,15 @@ if config["mapper"]=="bowtie2":
         shell:
             """
             bowtie2 {params.setting} -p {threads} \
-            -x {params.prefix} -1 {input.R1P} -2 {input.R2P} \
-            -S {output.sam} 2> {log} 
+                -x {params.prefix} -1 {input.R1P} -2 {input.R2P} \
+                -S {output.sam} 2> {log} 
             """
 
 elif config["mapper"]=="minimap2":
     rule phix_genome_mapping_minimap2:
         """map reads back to phix genome using minimap2"""
         input:
-            phix_fasta=os.path.join("resources", "phix_genome", "phix.fasta"),
+            phix_fasta=os.path.join(dir["db"], "phix_genome", "phix.fasta"),
             R1=os.path.join(dir["output"]["intermediate"], "trimmomatic", "{sample}_R1.trimmomatic.fastq.gz"),
             R2=os.path.join(dir["output"]["intermediate"], "trimmomatic", "{sample}_R2.trimmomatic.fastq.gz")
         output:
@@ -262,49 +250,37 @@ elif config["mapper"]=="minimap2":
         shell:
             """
             minimap2 -ax {params.setting} \
-            -t {threads} \
-            --secondary=no \
-            {input.phix_fasta} \
-            {input.R1} \
-            {input.R2} > {output.sam} 2>{log}
+                -t {threads} \
+                --secondary=no \
+                {input.phix_fasta} \
+                {input.R1} \
+                {input.R2} > {output.sam} 2>{log}
             """
 
-rule phix_remove_mapped_reads:
-    """keep unmapped paried reads and sort by name"""
+rule phix_reads_removal:
+    """extract unmapped paired reads"""
     input:
         sam=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}.sam")
     output:
-        bam=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_unmapped_sorted.bam")
+        R1=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R1.phixfilt.fastq.gz"),
+        R2=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R2.phixfilt.fastq.gz")
     threads:
         config["resources"]["small_cpu"]
+    resources:
+        mem_mb=config["resources"]["small_mem"]
     conda:
         os.path.join(dir["env"], "coverm.yml")
     shell:
         """
-        # keep pairs where both reads are unmapped and sort by name
-        samtools view -bS -f 12 {input.sam} | samtools sort - -n -o {output.bam} -@ {threads}
-        """
-
-rule phix_extract_unmapped_paired_reads:
-    """extract the unmapped paired reads"""
-    input:
-        bam=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_unmapped_sorted.bam")
-    output:
-        R1P=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R1.phixfilt.fastq.gz"),
-        R2P=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R2.phixfilt.fastq.gz")
-    threads:
-        config["resources"]["small_cpu"]
-    conda:
-        os.path.join(dir["env"], "coverm.yml")
-    shell:
-        """
+        samtools view -bS -f 12 {input.sam} | \
+        samtools sort -n -@ {threads} -T /tmp -o - | \
         samtools fastq \
-        -1 {output.R1P} \
-        -2 {output.R2P} \
-        -0 /dev/null \
-        -s /dev/null \
-        -N {input.bam} \
-        -@ {threads} # -N: add /1 or /2 to the read names
+            -1 {output.R1} \
+            -2 {output.R2} \
+            -0 /dev/null \
+            -s /dev/null \
+            -@ {threads} \
+            -N -  
         """
 
 rule get_reads_status_after_phix_reads_removal:
@@ -328,9 +304,9 @@ rule get_reads_status_after_phix_reads_removal:
 rule download_human_genome:
     """download the human genome"""
     output:
-        os.path.join("resources", "human_genome", "GRCh38.fasta")
+        os.path.join(dir["db"], "human_genome", "GRCh38.fasta")
     log:
-        os.path.join("resources", "human_genome", "GRCh38.log")
+        os.path.join(dir["db"], "human_genome", "GRCh38.log")
     params:
         url="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz"
     shell:
@@ -346,9 +322,9 @@ if config["mapper"]=="bowtie2":
     rule bowtie2_build_human_genome:
         """build bowtie2 index for human genome"""
         input:
-            human_fasta=os.path.join("resources", "human_genome", "GRCh38.fasta")
+            human_fasta=os.path.join(dir["db"], "human_genome", "GRCh38.fasta")
         output:
-            multiext(os.path.join("resources", "human_genome", "GRCh38"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2")
+            multiext(os.path.join(dir["db"], "human_genome", "GRCh38"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2")
         params: 
             prefix=lambda w, input: os.path.splitext(input.human_fasta)[0]
         threads: 
@@ -366,14 +342,14 @@ if config["mapper"]=="bowtie2":
     rule human_genome_mapping_bowtie2:
         """map reads back to human genome using bowtie2"""
         input:
-            bt_index=multiext(os.path.join("resources", "human_genome", "GRCh38"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"),
+            bt_index=multiext(os.path.join(dir["db"], "human_genome", "GRCh38"), ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"),
             R1=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R1.phixfilt.fastq.gz"),
             R2=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R2.phixfilt.fastq.gz")
         output:
             sam=temp(os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}.sam"))
         params:
             setting=config["bowtie2"]["extra_settings"],
-            prefix=os.path.join("resources", "human_genome", "GRCh38")
+            prefix=os.path.join(dir["db"], "human_genome", "GRCh38")
         log:
             os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}.bowtie2.log")
         threads:
@@ -392,7 +368,7 @@ elif config["mapper"]=="minimap2":
     rule human_genome_mapping_minimap2:
         """map reads back to human genome using minimap2"""
         input:
-            human_fasta=os.path.join("resources", "human_genome", "GRCh38.fasta"),
+            human_fasta=os.path.join(dir["db"], "human_genome", "GRCh38.fasta"),
             R1=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R1.phixfilt.fastq.gz"),
             R2=os.path.join(dir["output"]["intermediate"], "phix_filtered", "{sample}_R2.phixfilt.fastq.gz")
         output:
@@ -417,12 +393,13 @@ elif config["mapper"]=="minimap2":
                 {input.R2} > {output.sam} 2>{log}
             """
 
-rule human_remove_mapped_reads:
-    """keep unmapped paried reads and sort by name"""
+rule human_reads_removal:
+    """extract unmapped paired reads"""
     input:
         sam=os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}.sam")
     output:
-        bam=os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}_unmapped_sorted.bam")
+        R1=os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}_R1.humanfilt.fastq.gz"),
+        R2=os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}_R2.humanfilt.fastq.gz")
     threads:
         config["resources"]["med_cpu"]
     resources:
@@ -431,30 +408,15 @@ rule human_remove_mapped_reads:
         os.path.join(dir["env"], "coverm.yml")
     shell:
         """
-        # keep pairs where both reads are unmapped and sort by name
-        samtools view -bS -f 12 {input.sam} | samtools sort - -n -o {output.bam} -@ {threads}
-        """
-
-rule human_extract_unmapped_paired_reads:
-    """extract unmapped paried reads"""
-    input:
-        bam=os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}_unmapped_sorted.bam")
-    output:
-        R1=os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}_R1.humanfilt.fastq.gz"),
-        R2=os.path.join(dir["output"]["intermediate"], "human_filtered", "{sample}_R2.humanfilt.fastq.gz")
-    threads:
-        config["resources"]["small_cpu"]
-    conda:
-        os.path.join(dir["env"], "coverm.yml")
-    shell:
-        """
+        samtools view -bS -f 12 {input.sam} | \
+        samtools sort -n -@ {threads} -T /tmp -o - | \
         samtools fastq \
             -1 {output.R1} \
             -2 {output.R2} \
             -0 /dev/null \
             -s /dev/null \
-            -N {input.bam} \
-            -@ {threads}
+            -@ {threads} \
+            -N -
         """
 
 rule get_reads_status_after_human_reads_removal:
@@ -553,17 +515,19 @@ rule host_separate_mapped_and_umapped_reads:
     input:
         sam=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}.sam")
     output:
-        mapped=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted.bam"),
-        unmapped=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_unmapped_sorted.bam")
+        mapped=temp(os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted.bam")),
+        unmapped=temp(os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_unmapped_sorted.bam"))
     threads:
         config["resources"]["small_cpu"]
+    resources:
+        mem_mb=config["resources"]["small_mem"]
     conda:
         os.path.join(dir["env"], "coverm.yml")
     shell:
         """
         # separate mapped and unmapped reads and sort the bam file by reference coordinates 
-        samtools view -bS -F 4 {input.sam} | samtools sort - -o {output.mapped} -@ {threads}
-        samtools view -bS -f 4 {input.sam} | samtools sort - -o {output.unmapped} -@ {threads}
+        samtools view -bS -F 4 {input.sam} | samtools sort - -o {output.mapped} -@ {threads} -T /tmp 
+        samtools view -bS -f 4 {input.sam} | samtools sort - -o {output.unmapped} -@ {threads} -T /tmp 
         """
 
 rule host_separate_prophage_and_nonphage:
@@ -571,8 +535,8 @@ rule host_separate_prophage_and_nonphage:
     input:
         mapped=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted.bam")
     output:
-        prophage=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_prophage.bam"),
-        nonprophage=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_non-prophage.bam")
+        prophage=temp(os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_prophage.bam")),
+        nonprophage=temp(os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_non-prophage.bam"))
     params:
         bedFile=config["host_prophage_region"]
     threads:
@@ -598,7 +562,7 @@ rule host_filter_prophage_region:
     input:
         prophage=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_prophage.bam")
     output:
-        prophageFiltered=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_prophage_filtered.bam")
+        prophageFiltered=temp(os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_prophage_filtered.bam"))
     threads:
         config["resources"]["med_cpu"]
     params:
@@ -619,7 +583,7 @@ rule host_filter_nonphage_region:
     input:
         nonprophage=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_non-prophage.bam")
     output:
-        nonprophageFiltered=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_non-prophage_filtered.bam")
+        nonprophageFiltered=temp(os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_non-prophage_filtered.bam"))
     threads:
         config["resources"]["med_cpu"]
     params:
@@ -636,41 +600,26 @@ rule host_filter_nonphage_region:
         """
 
 rule host_merge_bam_files:
-    """merge unmapped, prophage filtered and non-prophage filtered bam files"""
+    """merge unmapped, prophage filtered and non-prophage filtered bam files, and sort by name"""
     input:
         unmapped=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_unmapped_sorted.bam"),
         prophageFiltered=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_prophage_filtered.bam"),
         nonprophageFiltered=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_mapped_sorted_non-prophage_filtered.bam")
     output:
-        kept=temp(os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_kept.bam"))
-    threads:
-        config["resources"]["small_cpu"]
-    conda:
-        os.path.join(dir["env"], "coverm.yml")
-    shell:
-        """
-        samtools merge -o {output.kept} -@ {threads} \
-            {input.unmapped} \
-            {input.prophageFiltered} \
-            {input.nonprophageFiltered} 
-        """
-
-rule host_sort_merged_bam:
-    """sort the merged bam files by name"""
-    input:
-        kept=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_kept.bam")
-    output:
         keptSorted=os.path.join(dir["output"]["intermediate"], "host_filtered", "{sample}_kept_sorted.bam")
-    conda:
-        os.path.join(dir["env"], "coverm.yml")
     threads:
         config["resources"]["small_cpu"]
     resources:
         mem_mb=config["resources"]["small_mem"]
+    conda:
+        os.path.join(dir["env"], "coverm.yml")
     shell:
         """
-        # sort by name 
-        samtools sort -n {input.kept} -o {output.keptSorted} -@ {threads}
+        samtools merge -o - -@ {threads} \
+            {input.unmapped} \
+            {input.prophageFiltered} \
+            {input.nonprophageFiltered} | \
+        samtools sort -n -@ {threads} -T /tmp -o {output.keptSorted} -
         """
 
 rule host_extract_kept_reads:
@@ -691,7 +640,7 @@ rule host_extract_kept_reads:
             -N {input.keptSorted} 
         """
 
-rule get_final_reads_status:
+rule get_reads_status_after_host_reads_removal:
     """check read counts after removing host contamination"""
     input:
         R1=expand(os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R1.unmapped.fastq.gz"), sample=SAMPLE),

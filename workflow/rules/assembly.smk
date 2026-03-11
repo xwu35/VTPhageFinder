@@ -38,7 +38,9 @@ if config["assembler"]=="megahit":
             -2 {input.R2} \
             $single \
             -o {params.outdir} \
-            -t {threads} {params.setting}
+            -t {threads} \
+            --tmp-dir /tmp \
+            {params.setting}
 
             # rename contigs using sample name
             sed 's/>/>{wildcards.sample}_/' {output.contigs} > {output.renamed}
@@ -78,7 +80,8 @@ elif config["assembler"]=="metaspades":
                 -1 {input.R1} \
                 -2 {input.R2} \
                 $single -o {params.outdir} \
-                -t {threads}
+                -t {threads} \
+                --tmp-dir /tmp
 
             # rename contigs using the sample name
             sed 's/>/>{wildcards.sample}_/' {output.contigs} > {output.renamed}
@@ -118,7 +121,8 @@ elif config["assembler"]=="spades_sc":
                 -1 {input.R1} \
                 -2 {input.R2} \
                 $single -o {params.outdir} \
-                -t {threads}
+                -t {threads} \
+                --tmp-dir /tmp
 
             # rename contigs using the sample name
             sed 's/>/>{wildcards.sample}_/' {output.contigs} > {output.renamed}
@@ -145,11 +149,11 @@ rule extract_1kb_contigs:
         """
 
 rule assembly_status:
-    """Check the quality of contigs using Quast"""
+    """check the quality of contigs using Quast"""
     input:
         contigs_1kb=os.path.join(dir["output"]["assembly"], "renamed_contigs", "{sample}_contigs_1kb.fasta")
     output:
-        report=os.path.join(dir["output"]["assembly"], "contig_evaluation", "{sample}", "report.txt")
+        report=os.path.join(dir["output"]["assembly"], "contig_evaluation", "{sample}", "transposed_report.tsv")
     threads: 
         config["resources"]["small_cpu"]
     params:
@@ -166,6 +170,22 @@ rule assembly_status:
             echo "No contigs >= 1kb were obtained from this sample"
             touch {output.report}
         fi
+        """
+        
+rule combine_assembly_status:
+    """combine all quast assembly stats"""
+    input:
+        report=expand(os.path.join(dir["output"]["assembly"], "contig_evaluation", "{sample}", "transposed_report.tsv"), sample=SAMPLE)
+    output:
+        os.path.join(dir["output"]["assembly"], "contig_evaluation", "combined_assembly_stats.txt")
+    params:
+        dir=directory(os.path.join(dir["output"]["assembly"], "contig_evaluation")),
+        script=os.path.join(dir["scripts"], "combine_quast_assembly_stats.R")
+    conda:
+        os.path.join(dir["env"], "R.yml")
+    shell:
+        """
+        Rscript {params.script} -d {params.dir} -o {output}
         """
 
 rule combine_all_contigs_1kb:

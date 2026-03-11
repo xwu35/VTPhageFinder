@@ -1,11 +1,11 @@
 rule make_blastdb_phix:
     """create blast database for phiX genome"""
     input:
-        os.path.join("resources", "phix_genome", "phix.fasta")
+        os.path.join(dir["db"], "phix_genome", "phix.fasta")
     output:
-        multiext(os.path.join("resources", "phix_genome", "blastDB", "phix_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto")
+        multiext(os.path.join(dir["db"], "phix_genome", "blastDB", "phix_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto")
     params: 
-        prefix=os.path.join("resources", "phix_genome", "blastDB", "phix_nucleotide_db"),
+        prefix=os.path.join(dir["db"], "phix_genome", "blastDB", "phix_nucleotide_db"),
         dbtype=config["blastn"]["dbtype"]
     threads: 
         config["resources"]["small_cpu"]
@@ -19,12 +19,12 @@ rule make_blastdb_phix:
 rule blastn_phix:
     """check if there contigs still aligned to the phiX genome (see if the reads removal was sufficient)"""
     input:
-        blastdb=multiext(os.path.join("resources", "phix_genome", "blastDB", "phix_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto"),
+        blastdb=multiext(os.path.join(dir["db"], "phix_genome", "blastDB", "phix_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto"),
         contigs_1kb=os.path.join(dir["output"]["assembly"], "renamed_contigs", "{sample}_contigs_1kb.fasta")
     output:
         blastn_phix_output=os.path.join(dir["output"]["check_contig_contamination"], "blastn_phix", "{sample}_blastn_phix.out")
     params:
-        db_path=os.path.join("resources", "phix_genome", "blastDB", "phix_nucleotide_db"),
+        db_path=os.path.join(dir["db"], "phix_genome", "blastDB", "phix_nucleotide_db"),
         evalue=config["blastn"]["evalue"],
         max_target_seqs=config["blastn"]["max_target_seqs"],
         outfmt=config["blastn"]["outfmt"]
@@ -46,11 +46,11 @@ rule blastn_phix:
 rule make_blastdb_human:
     """create blast database for human genome"""
     input:
-        os.path.join("resources", "human_genome", "GRCh38.fasta")
+        os.path.join(dir["db"], "human_genome", "GRCh38.fasta")
     output:
-        multiext(os.path.join("resources", "human_genome", "blastDB", "GRCh38_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto")
+        multiext(os.path.join(dir["db"], "human_genome", "blastDB", "GRCh38_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto")
     params: 
-        prefix=os.path.join("resources", "human_genome", "blastDB", "GRCh38_nucleotide_db"),
+        prefix=os.path.join(dir["db"], "human_genome", "blastDB", "GRCh38_nucleotide_db"),
         dbtype=config["blastn"]["dbtype"]
     threads: 
         config["resources"]["small_cpu"]
@@ -64,17 +64,19 @@ rule make_blastdb_human:
 rule blastn_human:
     """check if there are contigs still aligned to the human genome (see if the reads removal was sufficient)"""
     input:
-        blastdb=multiext(os.path.join("resources", "human_genome", "blastDB", "GRCh38_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto"),
+        blastdb=multiext(os.path.join(dir["db"], "human_genome", "blastDB", "GRCh38_nucleotide_db"), ".ndb", ".nhr", ".nin", ".njs", ".not", ".nsq", ".ntf", ".nto"),
         contigs_1kb=os.path.join(dir["output"]["assembly"], "renamed_contigs", "{sample}_contigs_1kb.fasta")
     output:
         blastn_human_output=os.path.join(dir["output"]["check_contig_contamination"], "blastn_human", "{sample}_blastn_human.out")
     params:
-        db_path=os.path.join("resources", "human_genome", "blastDB", "GRCh38_nucleotide_db"),
+        db_path=os.path.join(dir["db"], "human_genome", "blastDB", "GRCh38_nucleotide_db"),
         evalue=config["blastn"]["evalue"],
         max_target_seqs=config["blastn"]["max_target_seqs"],
         outfmt=config["blastn"]["outfmt"]
     threads:
         config["resources"]["med_cpu"]
+    resources:
+        mem_mb=config["resources"]["med_mem"]
     conda:
         os.path.join(dir["env"], "alignment.yml")
     shell:
@@ -159,6 +161,8 @@ rule blastn_host:
         blastn_host_output=os.path.join(dir["output"]["check_contig_contamination"], "blastn_host", "{sample}_blastn_host.out")
     threads:
         config["resources"]["med_cpu"]
+    resources:
+        mem_mb=config["resources"]["med_mem"]
     params:
         db_path=os.path.join(os.path.dirname(config["host_genome"]), "blastDB", os.path.basename(config["host_genome"])),
         evalue=config["blastn"]["evalue"],
