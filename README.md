@@ -21,8 +21,6 @@ git clone https://github.com/xwu35/VTPhageFinder.git
 VTPhageFinder is built for Snakemake version 7. Version 8 and above introduce breaking changes and deprecations and have not been tested. It may not function correctly with newer versions. Please install Snakemake version 7 using the script below.
 
 ```bash
-cd VTPhageFinder
-
 # option 1 using conda
 conda env create -n snakemake -f VTPhageFinder/snakemake_env.yml
 
