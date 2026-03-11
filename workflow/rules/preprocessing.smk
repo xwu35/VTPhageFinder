@@ -661,6 +661,85 @@ rule get_reads_status_after_host_reads_removal:
         seqkit stats -j {threads} -To {output.singleton_stats} {input.singleton}
         """
 
+rule dedup_paired_reads:
+    """remove duplicate reads from paired reads using clumpify"""
+    input:
+        R1=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R1.unmapped.fastq.gz"),
+        R2=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R2.unmapped.fastq.gz")
+    output:
+        R1_dedup=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R1.deduped.fastq.gz"),
+        R2_dedup=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R2.deduped.fastq.gz")
+    params:
+        java_mem=config["clumpify"]["java_mem"]
+    log:
+        os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_paired_clumpify.log")
+    threads:
+        config["resources"]["small_cpu"]
+    resources:
+        mem_mb=config["resources"]["small_mem"]
+    conda:
+        os.path.join(dir["env"], "bbmap.yml")
+    shell:
+        """
+        clumpify.sh \
+            in={input.R1} \
+            in2={input.R2} \
+            out={output.R1_dedup} \
+            out2={output.R2_dedup} \
+            dedupe=t \
+            subs=0 \
+            threads={threads} \
+            {params.java_mem} 2>{log}
+        """
+
+rule dedup_singleton_reads:
+    """removed duplicate reads from singleton reads using clumpify"""
+    input:
+        singleton=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}.unmapped.singletons.fastq.gz")
+    output:
+        RS_dedup=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_RS.deduped.fastq.gz")
+    params:
+        java_mem=config["clumpify"]["java_mem"]
+    log:
+        os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_singleton_clumpify.log")
+    threads:
+        config["resources"]["small_cpu"]
+    resources:
+        mem_mb=config["resources"]["small_mem"]
+    conda:
+        os.path.join(dir["env"], "bbmap.yml")
+    shell:
+        """
+        clumpify.sh \
+            in={input.singleton} \
+            out={output.RS_dedup} \
+            dedupe=t \
+            subs=0 \
+       	    threads={threads} \
+            {params.java_mem} 2>{log}
+        """
+
+rule count_reads_after_deduplicate:
+    """check read counts after removing duplicate reads"""
+    input:
+        R1=expand(os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R1.deduped.fastq.gz"), sample=SAMPLE),
+        R2=expand(os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R2.deduped.fastq.gz"), sample=SAMPLE),
+        singleton=expand(os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_RS.deduped.fastq.gz"), sample=SAMPLE)
+    output:
+        R1_stats=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_deduplicate", "R1_stats.tsv"),
+        R2_stats=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_deduplicate", "R2_stats.tsv"),
+        singleton_stats=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_deduplicate", "singleton_stats.tsv")
+    threads:
+        config["resources"]["small_cpu"]
+    conda:
+        os.path.join(dir["env"], "seqkit.yml")
+    shell:
+        """
+        seqkit stats -j {threads} -To {output.R1_stats} {input.R1}
+        seqkit stats -j {threads} -To {output.R2_stats} {input.R2}
+        seqkit stats -j {threads} -To {output.singleton_stats} {input.singleton}
+        """
+
 rule combine_all_reads_status:
     """combine reads counts and calculate number of removed reads at each step"""
     input:
@@ -670,6 +749,8 @@ rule combine_all_reads_status:
         after_human=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_human_reads_removal", "R1_stats.tsv"),
         after_host_paired=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_host_reads_removal", "R1_stats.tsv"),
         after_host_singleton=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_host_reads_removal", "singleton_stats.tsv")
+        after_dedup_paired=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_deduplicate", "R1_stats.tsv"),
+        after_dedup_singleton=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "after_deduplicate", "singleton_stats.tsv")
     output:
         table=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "number_of_reads_removed_at_each_step.txt"),
         figure=os.path.join(dir["output"]["reads_processing"], "reads_statistics", "reads_composition_barplot.svg")

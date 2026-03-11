@@ -11,6 +11,8 @@ after_phix <- snakemake@input$after_phix
 after_human <- snakemake@input$after_human
 after_host_paired <- snakemake@input$after_host_paired
 after_host_singleton <- snakemake@input$after_host_singleton
+after_dedup_paired <- snakemake@input$after_dedup_paired
+after_dedup_singleton <- snakemake@input$after_dedup_singleton
 
 # raw reads
 raw_read_counts <- read.table(raw_reads, sep = "\t", header = T) %>% 
@@ -52,9 +54,23 @@ singleton_counts_after_host <- read.table(after_host_singleton,
   rename(total_singleton_reads_after_host = "num_seqs") %>%
   select(sample, total_singleton_reads_after_host)
 
+# after dedup
+paired_counts_after_dedup <- read.table(after_dedup_paired, 
+                                  sep = "\t", header = T) %>%
+  mutate(sample = sub("_R1.*", "", basename(file)),
+         total_paired_reads_after_dedup = num_seqs * 2) %>%
+  select(sample, total_paired_reads_after_dedup)
+ 
+singleton_counts_after_dedup <- read.table(after_dedup_singleton, 
+                                        sep = "\t", header = T) %>%
+  mutate(sample = gsub("_RS.deduped.fastq.gz", "", basename(file))) %>%
+  rename(total_singleton_reads_after_dedup = "num_seqs") %>%
+  select(sample, total_singleton_reads_after_dedup)
+
 # merge all tables
 df_lists = list(raw_read_counts, counts_after_trimmomatic, counts_after_phix,
-                counts_after_human, paired_counts_after_host, singleton_counts_after_host)
+                counts_after_human, paired_counts_after_host, singleton_counts_after_host,
+                paired_counts_after_dedup, singleton_counts_after_dedup)
 
 combined_table <- Reduce(function(x, y) merge(x, y, by = "sample", all = TRUE), df_lists)
 
@@ -64,15 +80,16 @@ combined_table <- combined_table %>%
          phiX = total_reads_after_trimmomatic - total_reads_after_phix,
          human = total_reads_after_phix - total_reads_after_human,
          host = total_reads_after_human - total_paired_reads_after_host - total_singleton_reads_after_host,
-         reads_for_assembly = total_paired_reads_after_host + total_singleton_reads_after_host)
+         duplicates = total_paired_reads_after_host + total_singleton_reads_after_host - total_paired_reads_after_dedup - total_singleton_reads_after_dedup,
+         reads_for_assembly = total_paired_reads_after_dedup + total_singleton_reads_after_dedup)
 
 # barplot of removed reads at each step
 # define colors
-colors <- c("#009E73", "#E69F00", "#56B4E9", "#999999", "#CC79A7")
+colors <- c("#009E73", "#E69F00", "#56B4E9", "#999999", "#0072B2", "#CC79A7")
 
 # plot
 p_composition_reads <- combined_table %>%
-  select(sample, adapters_low_quality, phiX, human, host, reads_for_assembly) %>%
+  select(sample, adapters_low_quality, phiX, human, host, duplicates, reads_for_assembly) %>%
   pivot_longer(!sample, names_to = "type", values_to = "count") %>% 
   ggplot(aes(x=sample, y=count, fill=type)) +
   geom_bar(position="fill", stat="identity") +
@@ -92,7 +109,7 @@ p_composition_reads <- combined_table %>%
 
 # select few columns to write out
 output_table <- combined_table %>%
-  select(sample, total_raw_reads, adapters_low_quality, phiX, human, host, reads_for_assembly) 
+  select(sample, total_raw_reads, adapters_low_quality, phiX, human, host, duplicates, reads_for_assembly) 
   
 # save table
 write.table(output_table, snakemake@output$table,

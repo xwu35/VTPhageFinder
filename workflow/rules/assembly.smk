@@ -1,9 +1,9 @@
 if config["assembler"]=="megahit":
     rule megahit_assembly:
         input:
-            R1=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R1.unmapped.fastq.gz"),
-            R2=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R2.unmapped.fastq.gz"),
-            singleton=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}.unmapped.singletons.fastq.gz")
+            R1=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R1.deduped.fastq.gz"),
+            R2=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R2.deduped.fastq.gz"),
+            singleton=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_RS.deduped.fastq.gz")
         output:
             contigs=os.path.join(dir["output"]["assembly"], "intermediate", "{sample}", "final.contigs.fa"),
             renamed=os.path.join(dir["output"]["assembly"], "renamed_contigs", "{sample}_contigs.fasta")
@@ -49,9 +49,9 @@ if config["assembler"]=="megahit":
 elif config["assembler"]=="metaspades":
     rule metaspades_assembly:
         input:
-            R1=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R1.unmapped.fastq.gz"),
-            R2=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R2.unmapped.fastq.gz"),
-            singleton=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}.unmapped.singletons.fastq.gz")
+            R1=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R1.deduped.fastq.gz"),
+            R2=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R2.deduped.fastq.gz"),
+            singleton=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_RS.deduped.fastq.gz")
         output:
             contigs=os.path.join(dir["output"]["assembly"], "intermediate", "{sample}", "contigs.fasta"),
             renamed=os.path.join(dir["output"]["assembly"], "renamed_contigs", "{sample}_contigs.fasta")
@@ -90,9 +90,9 @@ elif config["assembler"]=="metaspades":
 elif config["assembler"]=="spades_sc":
     rule spades_single_cell_mode_assembly:
         input:
-            R1=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R1.unmapped.fastq.gz"),
-            R2=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}_R2.unmapped.fastq.gz"),
-            singleton=os.path.join(dir["output"]["reads_processing"], "filtered_reads", "{sample}.unmapped.singletons.fastq.gz")
+            R1=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R1.deduped.fastq.gz"),
+            R2=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_R2.deduped.fastq.gz"),
+            singleton=os.path.join(dir["output"]["reads_processing"], "deduped_reads", "{sample}_RS.deduped.fastq.gz")
         output:
             contigs=os.path.join(dir["output"]["assembly"], "intermediate", "{sample}", "contigs.fasta"),
             renamed=os.path.join(dir["output"]["assembly"], "renamed_contigs", "{sample}_contigs.fasta")
